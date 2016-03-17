@@ -23,7 +23,7 @@ The following snippets are from the tests included with the project. You may wan
 ### Simple SQL manipulations mirroring
 The library can be used to interact with SQLITE like with the original library's C-style API
 Note that at the moment only the functions that I use in my projects are exposed
-```c_cpp
+```c++
   // Simple sqlite maniplation, mimics sqlite's native C interface
   sqlite::database::type_ptr db(new sqlite::database::type("test.db"));
   ASSERT_EQ(SQLITE_OK, db->result_code());
@@ -66,7 +66,7 @@ FROM `test_table`");
   double float_value = select.get<double>(3);
 ```
 ### STL-style interactions
-```c_cpp
+```c++
   // Create random test source data
   std::uniform_real_distribution<double> uniform(0, 1);
   std::default_random_engine re;
