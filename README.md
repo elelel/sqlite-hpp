@@ -72,7 +72,7 @@ FROM `test_table`");
   typedef sqlite::buffered_insert_query<std::string, std::vector<uint8_t>, int, double> insert_type;
   insert_type insert(db, "test_table", std::vector<std::string>{"str_field", "blob_field", "int_field", "float_field"});
   // Insert data into sql while transforming it, exactly as we did when generated expected data randomly.
-  std::transform(source_data.begin(), source_data.end(), std::back_inserter(insert));
+  std::copy(source_data.begin(), source_data.end(), std::back_inserter(insert));
   ASSERT_EQ(SQLITE_DONE, insert.result_code());
   // flush() has to be called, as we may still have buffered data in buffered insert query.
   // It is called automatically on object destruction, so generally you won't need to do this
