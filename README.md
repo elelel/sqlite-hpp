@@ -2,27 +2,28 @@
 ## Features
 * STL-compliant interface. You can treat queries the way you treat STL containers (std::vectors, etc.). ```for (auto record : select_query) { ... }```
 * Interacting in C-style the way you're used to dealing with C SQLITE interface is possible
-* Generic approach to type conversion. You are not locked down to returning some fixed type predefined by the library (e.g. vector<T> for BLOBs can easily be replaced by naked char * pointers or even not returned at all and processed immediately). 
+* Generic approach to type conversion. You are not locked down to returning some fixed type predefined by the library (e.g. '''vector<T>''' for BLOBs can easily be replaced by naked char * pointers or even not returned at all and processed immediately). 
 * Support for buffered inserts of multiple records. Just feed the data into buffered_insert_query, and it will create as few SQL queries as possible.
-* Exception-free C++ code (in a sense that no new exception throwing is introduced by default by the library). Can be useful in embeded or some other restricted environment, or if you're simple not too crazy about C++ exceptions. Result codes of each operation can be retrived by result_code() method and are the native SQLITE C result codes
-* Header-only library - no need to compile as separate translation units, just add it to your C++ with native Sqlite
+* Exception-free C++ code (in a sense that no new exception throwing is introduced by default by the library). Can be useful in embeded or some other restricted environment, or if you're just not too crazy about C++ exceptions. Result codes of each operation can be retrieved by result_code() method and are the native SQLITE C result codes
+* Header-only library - no need to compile as a separate translation units, just add it to your C++ with native Sqlite library
 
 ## Requirements
-1. Requirements to use the library
+1. ... to use the library
   1. C++11-compliant compiler
-2. To build the tests (== examples)
+2. ... to build the tests (== examples)
   1. Google Test library
   2. CMake
 
 ## Adding to a project
 If you already have an existing project with Sqlite library installed, just add the library directory to your project. This can be done by copying to your project's source dir (Visual Studio users also need to use "Add existing files.." IDE feature). Another way is to save the library's files to a separate dir and add it to project's includes (that's probably what CMake users would prefer). Then just include "sqlite" header file.
 To create a new project, before doing the above add the native Sqlite3 library (you can use the copy from the test dir of this project).
+See test directory for an example of CMake project configuration.
 
 ## Using the library
-The following snippets are from the tests included with the project. You may want to refer to the sources in test directory for more details
+The following snippets are from the tests included with the project. You may want to refer to the sources in test directory for more details.
 ### Simple SQL manipulations mirroring original SQLITE API
-The library can be used to interact with SQLITE like with the original library's C-style API
-Note that at the moment only the functions that I use in my projects are exposed
+The library can be used to interact with SQLITE like with the original library's C-style API.
+Note that at the moment only the functions that I use in my projects are exposed.
 ```c++
   // Simple sqlite maniplation, mimics sqlite's native C interface
   sqlite::database::type_ptr db(new sqlite::database::type("test.db"));
@@ -91,8 +92,8 @@ FROM `test_table`");
   }
 ```
 
-### Configuring return types
-See value_access_policy.hpp file in include/src
+### Configuring local/SQLITE type conversion
+Mapping between types is handled by value_access_policy_t template parameter. See default policy implementation in value_access_policy.hpp file in include/src directory.
 
 ## License
 BSD
