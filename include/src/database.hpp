@@ -66,7 +66,7 @@ namespace sqlite {
       return result_code_;
     }
 
-    const close() {
+    const void close() {
       db_ = nullptr;
     }
 
