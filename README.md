@@ -76,7 +76,7 @@ FROM `test_table`");
   ASSERT_EQ(SQLITE_DONE, insert.result_code());
   // flush() has to be called, as we may still have buffered data in buffered insert query.
   // It is called automatically on object destruction, so generally you won't need to do this
-  // manually if you follow RIIA pattern in your program.
+  // manually if you follow RAII pattern in your program.
   insert.flush();
   ASSERT_EQ(SQLITE_DONE, insert.result_code());
 
