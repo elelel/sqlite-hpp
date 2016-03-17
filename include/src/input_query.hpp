@@ -27,7 +27,7 @@ namespace sqlite {
 
     input_query_iterator<value_access_policy_t, Rs...> begin() {
       this->step();
-      return input_query_iterator<value_access_policy_t, Rs...>(type_ptr(this, [] (type *) {}));
+      return input_query_iterator<value_access_policy_t, Rs...>(type_ptr(this, [] (type *) {}), false);
     }
 
     input_query_iterator<value_access_policy_t, Rs...> end() {
@@ -44,13 +44,32 @@ namespace sqlite {
     typedef std::shared_ptr<type> type_ptr;
     typedef input_query_base<value_access_policy_t, Rs...> query_type;
 
-    input_query_iterator(const typename query_type::type_ptr& q) : q_(q), end_(false) {
+    input_query_iterator(const typename query_type::type_ptr& q) :
+      result_code_container(), 
+      q_(q),
+      end_(false),
+      pos_(0) {
     }
 
-    input_query_iterator(const typename query_type::type_ptr& q, bool end) : q_(q), end_(end) {
+    input_query_iterator(const typename query_type::type_ptr& q, bool end) :
+      result_code_container(),
+      q_(q),
+      end_(end),
+      pos_(0) {
     }
 
-    input_query_iterator(const input_query_iterator& other) : q_(other.q_) {
+    input_query_iterator(const type& other) :
+      result_code_container(other),
+      q_(other.q_),
+      end_(other.end_),
+      pos_(other.pos_) {
+    }
+
+    input_query_iterator(type&& other) :
+      result_code_container(other),
+      q_(std::move(other.q_)),
+      end_(std::move(other.end_)),
+      pos_(std::move(other.pos_)) {
     }
 
     void swap(input_query_iterator &other) {
@@ -63,11 +82,13 @@ namespace sqlite {
 
     type& operator++() {
       q_->step();
+      ++pos_;
       if (q_->result_code() != SQLITE_ROW) end_ = true;
     }
 
     void operator++(int) {
       q_->step();
+      ++pos_;
       if (q_->result_code() != SQLITE_ROW) end_ = true;
     }
 
@@ -75,8 +96,8 @@ namespace sqlite {
       if (end_) {
         return (q_ == other.q_) && (end_ == other.end_);
       } else {
-        return (q_ == other.q_) && (pos_ == other.pos_) &&
-          (end_ == other.end_) && (q_->result_code() == other.q_->result_code());
+        return (q_ == other.q_) && (end_ == other.end_) &&
+          (pos_ == other.pos_) && (q_->result_code() == other.q_->result_code());
       }
     }
 

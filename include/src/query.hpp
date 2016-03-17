@@ -21,6 +21,7 @@ namespace sqlite {
     query_base(const database::type_ptr& db) : db_(db) {}
     
     query_base(const database::type_ptr& db, const std::string& query_str) :
+      result_code_container(),
       db_(db),
       query_str_(query_str) {
       prepare();
