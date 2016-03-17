@@ -81,7 +81,7 @@ namespace sqlite {
     }
 
     void swap(type& other) {
-      query_base.swap(other);
+      query_base<value_access_policy_t>::swap(other);
       std::swap(max_sql_length_, other.max_sql_length_);
       std::swap(max_compound_select_, other.max_compound_select_);
       std::swap(max_variable_number_, other.max_variable_number_);
@@ -163,7 +163,7 @@ namespace sqlite {
     }
 
   private:
-    query_base(const database::type_ptr& db, const std::string& query_str) = delete;
+    buffered_insert_query_base(const database::type_ptr& db, const std::string& query_str) = delete;
 
     int max_compound_select_;
     int max_sql_length_;
