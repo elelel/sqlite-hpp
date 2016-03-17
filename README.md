@@ -20,7 +20,7 @@ To create a new project, before doing the above add the native Sqlite3 library (
 
 ## Using the library
 The following snippets are from the tests included with the project. You may want to refer to the sources in test directory for more details
-### Simple SQL manipulations mirroring
+### Simple SQL manipulations mirroring original SQLITE API
 The library can be used to interact with SQLITE like with the original library's C-style API
 Note that at the moment only the functions that I use in my projects are exposed
 ```c++
