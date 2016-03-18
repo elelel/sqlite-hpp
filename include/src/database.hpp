@@ -16,11 +16,11 @@ namespace sqlite {
     typedef std::shared_ptr<database> type_ptr;
     
     database() {
-      LOG("database::database() constructor");
+      SQLITE_HPP_LOG("database::database() constructor");
     }
 
     database(const std::string& filename) : database() {
-      LOG("database::database(filename) constructor");
+      SQLITE_HPP_LOG("database::database(filename) constructor");
       open(filename);
     }
 
@@ -28,25 +28,25 @@ namespace sqlite {
       result_code_container(other),
       filename_(other.filename_),
       db_(other.db_) {
-      LOG("database::database copy constructor");
+      SQLITE_HPP_LOG("database::database copy constructor");
     }
 
     database(database&& other) :
       result_code_container(other),
       filename_(std::move(other.filename_)),
       db_(std::move(other.db_)) {
-      LOG("database::database move constructor");
+      SQLITE_HPP_LOG("database::database move constructor");
     }
 
     void swap(database& other) {
-      LOG("database::swap");
+      SQLITE_HPP_LOG("database::swap");
       std::swap(filename_, other.filename_);
       std::swap(db_, other.db_);
       std::swap(result_code_, other.result_code_);
     }
 
     database& operator=(const database& other) {
-      LOG("database::operator=");
+      SQLITE_HPP_LOG("database::operator=");
       database tmp(other);
       swap(tmp);
       return *this;
@@ -58,10 +58,10 @@ namespace sqlite {
       if (result_code_ == SQLITE_OK) {
         filename_ = filename;
         db_ = std::shared_ptr<::sqlite3>(db, [this] (sqlite3* p) {
-            LOG("database::db_ Database closed");
+            SQLITE_HPP_LOG("database::db_ Database closed");
             this->result_code_ = sqlite3_close(p); });
       } else {
-        LOG(std::string("sqlite::database::open failed to open ") + filename);
+        SQLITE_HPP_LOG(std::string("sqlite::database::open failed to open ") + filename);
       }
       return result_code_;
     }

@@ -56,7 +56,7 @@ namespace sqlite {
     }
 
     ~buffered_insert_query_base() {
-      LOG("Destructing");
+      SQLITE_HPP_LOG("Destructing");
       flush();
     }
 
@@ -103,7 +103,7 @@ namespace sqlite {
     void push_back(const value_type& r) {
       const size_t record_sz = std::tuple_size<value_type>::value;
       if ((this->result_code_ == SQLITE_OK) || (this->result_code_ == SQLITE_DONE)) {
-        LOG(std::string("buffered_insert_query::push_back Estimated query size + delta: buf_.size() = ") + std::to_string(buf_.size()) +
+        SQLITE_HPP_LOG(std::string("buffered_insert_query::push_back Estimated query size + delta: buf_.size() = ") + std::to_string(buf_.size()) +
             " (max = " + std::to_string(max_compound_select_) +
             " ), query length = " + std::to_string((query_prefix_str_.length() + ((buf_.size() + 1) * (values_placeholders_str_.length() + record_separator_str_.length())))) +
             " (max = " + std::to_string(max_sql_length_) + "), " +
@@ -139,11 +139,11 @@ namespace sqlite {
           query_affix_str += values_placeholders_str_;
         }
         this->query_str_ = query_prefix_str_ + query_affix_str;
-        LOG(std::string("buffered_insert_query::flush Query string: ") + this->query_str_);
+        SQLITE_HPP_LOG(std::string("buffered_insert_query::flush Query string: ") + this->query_str_);
         this->prepare();
-        LOG("buffered_insert_query::flush Prepare called.");
+        SQLITE_HPP_LOG("buffered_insert_query::flush Prepare called.");
         if (this->result_code_ != SQLITE_OK) return;
-        LOG("buffered_insert_query::flush Prepare result ok.");
+        SQLITE_HPP_LOG("buffered_insert_query::flush Prepare result ok.");
         
         const size_t record_sz = std::tuple_size<value_type>::value;
         int idx = 1;
@@ -152,13 +152,13 @@ namespace sqlite {
           if (this->result_code_ != SQLITE_OK) return;
           idx += record_sz;
         };
-        LOG("buffered_insert_query::flush Bind tuples ok.");
+        SQLITE_HPP_LOG("buffered_insert_query::flush Bind tuples ok.");
 
         this->step();
         if (this->result_code_ == SQLITE_DONE) {
           buf_.clear();
         }
-        LOG(std::string("buffered_insert_query::flush Step result = ") + std::to_string(this->result_code_));
+        SQLITE_HPP_LOG(std::string("buffered_insert_query::flush Step result = ") + std::to_string(this->result_code_));
       }
     }
 

@@ -45,7 +45,7 @@ private:
   std::ofstream log_;
 };
 
-#define LOG(X) logging::get_instance().log(X);
+#define SQLITE_HPP_LOG(X) logging::get_instance().log(X);
 #else
-#define LOG(X)
+#define SQLITE_HPP_LOG(X)
 #endif
