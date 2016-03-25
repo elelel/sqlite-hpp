@@ -43,6 +43,7 @@ namespace sqlite {
     typedef input_query_iterator<value_access_policy_t, Rs...> type;
     typedef std::shared_ptr<type> type_ptr;
     typedef input_query_base<value_access_policy_t, Rs...> query_type;
+    typedef std::tuple<Rs...> value_type;
 
     input_query_iterator(const typename query_type::type_ptr& q) :
       result_code_container(), 
