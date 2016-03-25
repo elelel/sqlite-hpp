@@ -3,6 +3,7 @@
 #define SQLITE_HPP_LOG_FILENAME "sqlite_debug.log"
 
 #include <sqlite>
+#include <sqlite_buffered>
 
 #include <algorithm>
 #include <cmath>
@@ -111,7 +112,7 @@ TEST(SqliteTest, ComplexBatchQuery) {
   ASSERT_EQ(SQLITE_DONE, create_table.result_code());
 
   // Create buffered insert query.
-  typedef sqlite::buffered_insert_query<std::string, std::vector<uint8_t>, int, double> insert_type;
+  typedef sqlite::buffered::insert_query<std::string, std::vector<uint8_t>, int, double> insert_type;
   insert_type insert(db, "test_table", std::vector<std::string>{"str_field", "blob_field", "int_field", "float_field"});
   // Insert data into sql while transforming it, exactly as we did when generated expected data randomly.
   std::transform(source_data.begin(), source_data.end(), std::back_inserter(insert), derive_bogus_record);

@@ -3,5 +3,4 @@
 #include "src/database.hpp"
 #include "src/value_access_policy.hpp"
 #include "src/query.hpp"
-#include "src/input_query.hpp"
-
+#include "src/buffered_insert_query.hpp"
