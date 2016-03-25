@@ -47,7 +47,7 @@ namespace sqlite {
   };
 }
 
-#define SQLITE_HPP_LOG(X) logging::get_instance().log(X);
+#define SQLITE_HPP_LOG(X) ::sqlite::logging::get_instance().log(X);
 #else
 #define SQLITE_HPP_LOG(X)
 #endif
