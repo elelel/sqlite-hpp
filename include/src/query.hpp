@@ -7,12 +7,12 @@
 #include "value_access_policy.hpp"
 
 namespace sqlite {
-  template <typename value_access_t = default_value_access_policy>
+  template <typename value_access_policy_t = default_value_access_policy>
   class query_base;
 
   class query;
   
-  template <typename value_access_t>
+  template <typename value_access_policy_t>
   class query_base : public result_code_container {
   public:
     typedef query_base type;
@@ -60,7 +60,7 @@ namespace sqlite {
 
     template <typename T>
     void bind(const int i, const T& value) {
-      typedef typename value_access_t::template local_type<T> value_policy;
+      typedef typename value_access_policy_t::template local_type<T> value_policy;
       result_code_ = value_policy::bind(stmt_.get(), i, value);
     }
     
@@ -76,7 +76,7 @@ namespace sqlite {
 
     template <typename T>
     T get(const int i) {
-      typedef typename value_access_t::template local_type<T> value_policy;
+      typedef typename value_access_policy_t::template local_type<T> value_policy;
       const int ct = ::sqlite3_column_type(stmt_.get(), i);
       if (ct == SQLITE_NULL) {
         return value_policy::null_value();
