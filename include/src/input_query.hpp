@@ -120,27 +120,7 @@ namespace sqlite {
     typename query_type::type_ptr q_;
     bool end_;
     size_t pos_;
-      
-    template <typename A>
-    std::tuple<A> get_values(const int i) {
-      A value;
-      q_->get(i, value);
-      if (q_->result_code_ != SQLITE_OK) {
-        result_code_ = q_->result_code_;
-      }
-      return std::tuple<A>(value);
-    }
-    
-    template <typename A, typename B, typename... Zs>
-    std::tuple<A, B, Zs...> get_values(const int i) {
-      A value;
-      q_->get(i, value);
-      if (q_->result_code_ != SQLITE_OK) {
-        result_code_ = q_->result_code_;
-      }
-      return std::tuple_cat(std::tuple<A>(value), get_values<B, Zs...>(i + 1));
-    }
-    
+          
   };
 
   template <typename... Rs>
