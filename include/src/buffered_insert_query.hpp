@@ -1,29 +1,28 @@
 #pragma once
 
-#include "query.hpp"
-
 #include <tuple>
 
-#include "value_access_policy.hpp"
-
 #include "logging.hpp"
+#include "query.hpp"
+#include "value_access_policy.hpp"
 
 namespace sqlite {
   namespace buffered {
-    template <typename value_access_policy_t, typename... Rs>
+    template <typename record_tuple_t, typename value_access_policy_t>
     class insert_query_base;
-    /*  template <typename value_access_policy_t, typename... Rs>
+    /*  template <typename record_tuple_t, typename value_access_policy_t>
         class insert_query_iterator; */
     template <typename... Rs> 
     class insert_query;
 
-    template <typename value_access_policy_t, typename... Rs>
+    template <typename record_tuple_t, typename value_access_policy_t>
     class insert_query_base : public query_base<value_access_policy_t> {
-      friend class input_query_iterator<value_access_policy_t, Rs...>;
+      friend class input_query_iterator<record_tuple_t, value_access_policy_t>;
     public:
-      typedef insert_query_base<value_access_policy_t, Rs...> type;
+      typedef insert_query_base<record_tuple_t, value_access_policy_t> type;
       typedef std::shared_ptr<type> type_ptr;
-      typedef std::tuple<Rs...> value_type;
+      typedef record_tuple_t record_tuple_type;
+      typedef record_tuple_t value_type;
 
       using query_base<value_access_policy_t>::query_base;
 
@@ -101,7 +100,7 @@ namespace sqlite {
         return std::back_insert_iterator<type>(this);
       }
 
-      void push_back(const value_type& r) {
+      void push_back(const record_tuple_type& r) {
         const size_t record_sz = std::tuple_size<value_type>::value;
         if ((this->result_code_ == SQLITE_OK) || (this->result_code_ == SQLITE_DONE)) {
           SQLITE_HPP_LOG(std::string("insert_query::push_back Estimated query size + delta: buf_.size() = ") + std::to_string(buf_.size()) +
@@ -122,11 +121,13 @@ namespace sqlite {
         }
       }
 
+      template <typename... Rs>
       void push_back_variadic(Rs... values) {
         value_type r = std::make_tuple<value_type>(std::forward<Rs...>(values...));
         push_back(r);
       }
 
+      template <typename... Rs>
       void push_back(Rs... values) {
         push_back_variadic(std::forward<Rs...>(values...));
       }
@@ -177,9 +178,9 @@ namespace sqlite {
     };
 
     template <typename... Rs>
-    class insert_query : public insert_query_base<default_value_access_policy, Rs...> {
+    class insert_query : public insert_query_base<std::tuple<Rs...>, default_value_access_policy> {
     public:
-      using insert_query_base<default_value_access_policy, Rs...>::insert_query_base;
+      using insert_query_base<std::tuple<Rs...>, default_value_access_policy>::insert_query_base;
     };
   }
 }

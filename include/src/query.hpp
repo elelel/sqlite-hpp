@@ -90,6 +90,40 @@ namespace sqlite {
       value = get<T>(i);
     }
 
+    template <typename... x>
+    struct tuple_tail_type;
+
+    template <typename head_t>
+    struct tuple_tail_type<std::tuple<head_t>> {
+      typedef std::tuple<> type;
+    };
+    
+    template <typename head_t, typename... tail_t>
+    struct tuple_tail_type<std::tuple<head_t, tail_t...>> {
+      typedef std::tuple<tail_t...> type;
+    };
+
+    template <std::size_t I = 0, typename tuple_t>
+    typename std::enable_if<0 == std::tuple_size<tuple_t>::value, tuple_t>::type
+    get_tuple_() {
+      return std::tuple<>();
+    }
+
+    template <std::size_t I = 0, typename tuple_t>
+    typename std::enable_if<0 != std::tuple_size<tuple_t>::value, tuple_t>::type 
+    get_tuple_() {
+      typedef typename std::tuple_element<0, tuple_t>::type A;
+      A value;
+      get(I, value);
+      return std::tuple_cat(std::tuple<A>(value), get_tuple_<I+1, typename tuple_tail_type<tuple_t>::type>());
+    }
+
+    template <typename tuple_t>
+    tuple_t get_tuple(tuple_t* dummy_tuple_ptr) {
+      typedef tuple_t tuple_type;
+      return get_tuple_<0, tuple_type>();
+    }
+
     void step() {
       result_code_ = sqlite3_step(stmt_.get());
     }

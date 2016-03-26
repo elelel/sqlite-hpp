@@ -1,49 +1,54 @@
 #pragma once
 
-#include "query.hpp"
-
 #include <sqlite3.h>
 
 #include <tuple>
 
 #include "logging.hpp"
+#include "query.hpp"
 
 namespace sqlite {
-  template <typename value_access_policy_t, typename... Rs>
+  template <typename record_tuple_t,
+            typename value_access_policy_t>
   class input_query_base;
-  template <typename value_access_policy_t, typename... Rs>
+  template <typename record_tuple_t,
+            typename value_access_policy_t>
   class input_query_iterator;
   template <typename... Rs>
   class input_query;
 
-  template <typename value_access_policy_t, typename... Rs>
+  template <typename record_tuple_t,
+            typename value_access_policy_t>
   class input_query_base : public query_base<value_access_policy_t> {
-    friend class input_query_iterator<value_access_policy_t, Rs...>;
+    friend class input_query_iterator<record_tuple_t, value_access_policy_t>;
   public:
-    typedef input_query_base<value_access_policy_t, Rs...> type;
+    typedef input_query_base<record_tuple_t,
+                             value_access_policy_t> type;
     typedef std::shared_ptr<type> type_ptr;
+    typedef input_query_iterator<record_tuple_t, value_access_policy_t> iterator;
 
     using query_base<value_access_policy_t>::query_base;
 
-    input_query_iterator<value_access_policy_t, Rs...> begin() {
+    iterator begin() {
       this->step();
-      return input_query_iterator<value_access_policy_t, Rs...>(type_ptr(this, [] (type *) {}), false);
+      return iterator(type_ptr(this, [] (type *) {}), false);
     }
 
-    input_query_iterator<value_access_policy_t, Rs...> end() {
-      return input_query_iterator<value_access_policy_t, Rs...>(type_ptr(this, [] (type *) {}), true);
+    iterator end() {
+      return iterator(type_ptr(this, [] (type *) {}), true);
     }
   };
 
-  template <typename value_access_policy_t, typename... Rs>
+  template <typename record_tuple_t, typename value_access_policy_t>
   class input_query_iterator :
-    public std::iterator<std::input_iterator_tag, input_query<value_access_policy_t, Rs...>>,
+    public std::iterator<std::input_iterator_tag, input_query<record_tuple_t, value_access_policy_t>>,
     public result_code_container {
   public:
-    typedef input_query_iterator<value_access_policy_t, Rs...> type;
+    typedef input_query_iterator<record_tuple_t, value_access_policy_t> type;
     typedef std::shared_ptr<type> type_ptr;
-    typedef input_query_base<value_access_policy_t, Rs...> query_type;
-    typedef std::tuple<Rs...> value_type;
+    typedef input_query_base<record_tuple_t, value_access_policy_t> query_type;
+    typedef record_tuple_t record_tuple_type;
+    typedef record_tuple_t value_type;
 
     input_query_iterator(const typename query_type::type_ptr& q) :
       result_code_container(), 
@@ -106,8 +111,9 @@ namespace sqlite {
       return !(*this == other);
     }
 
-    std::tuple<Rs...> operator*() {
-      return get_values<Rs...>(0);
+    record_tuple_type operator*() {
+      record_tuple_type* dummy_ptr(nullptr);
+      return q_->get_tuple(dummy_ptr);
     }
 
   private:
@@ -135,15 +141,10 @@ namespace sqlite {
       return std::tuple_cat(std::tuple<A>(value), get_values<B, Zs...>(i + 1));
     }
     
-    template <typename... Zs>
-      std::tuple<Rs...> get_values() {
-      return get_values<Rs...>(0);
-    }
-
   };
 
   template <typename... Rs>
-  class input_query : public input_query_base<default_value_access_policy, Rs...> {
-    using input_query_base<default_value_access_policy, Rs...>::input_query_base;
+  class input_query : public input_query_base<std::tuple<Rs...>, default_value_access_policy> {
+    using input_query_base<std::tuple<Rs...>, default_value_access_policy>::input_query_base;
   };
 }
