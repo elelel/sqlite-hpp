@@ -90,12 +90,7 @@ namespace sqlite {
       q_->step();
       ++pos_;
       if (q_->result_code() != SQLITE_ROW) end_ = true;
-    }
-
-    void operator++(int) {
-      q_->step();
-      ++pos_;
-      if (q_->result_code() != SQLITE_ROW) end_ = true;
+      return *this;
     }
 
     bool operator==(const type& other) const {
