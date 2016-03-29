@@ -64,7 +64,7 @@ FROM `test_table`");
   ASSERT_EQ(float_value, 1.2345);
 }
 
-TEST(SqliteTest, ComplexBatchQuery) {
+TEST(SqliteTest, BatchInsertQuery) {
   // Advanced sqlite manipulation with query buffering and STL-style iteration
   
   // Create random test source data
@@ -131,5 +131,69 @@ TEST(SqliteTest, ComplexBatchQuery) {
   for (auto row : select) {
     ASSERT_EQ(*expected_row, row);
     ++expected_row;
+  }
+}
+
+TEST(SqliteTest, BufferedInputQuery) {
+  // Create random test source data
+  std::uniform_int_distribution<int64_t> uniform(0, std::numeric_limits<int64_t>::max() / 2);
+  std::default_random_engine re;
+  std::vector<int64_t> source_data;
+  for (int i = 0; i < 10000; ++i) {
+    source_data.push_back(uniform(re));
+  }
+
+  // Create database to store the data
+  sqlite::database::type_ptr db(new sqlite::database::type("test.db"));
+  ASSERT_EQ(SQLITE_OK, db->result_code());
+  sqlite::query drop_table(db, "DROP TABLE IF EXISTS `test_table`");
+  drop_table.step();
+  ASSERT_EQ(SQLITE_DONE, drop_table.result_code());
+  sqlite::query create_table(db, "CREATE TABLE `test_table` \
+(`id` INTEGER PRIMARY KEY AUTOINCREMENT, \
+`composite_key_part1` INTEGER, \
+`composite_key_part2` INTEGER)");
+  create_table.step();
+  ASSERT_EQ(SQLITE_DONE, create_table.result_code());
+
+  typedef std::tuple<int64_t, int64_t> record_type;
+  // Create buffered insert query.
+  typedef sqlite::buffered::insert_query<int64_t, int64_t> insert_type;
+  insert_type insert(db, "test_table", std::vector<std::string>{"composite_key_part1", "composite_key_part2"});
+  std::transform(source_data.begin(), source_data.end(), std::back_inserter(insert), [] (const int64_t& i) {
+      return record_type(i, i+1);
+    });
+  ASSERT_EQ(SQLITE_DONE, insert.result_code());
+  insert.flush();
+  ASSERT_EQ(SQLITE_DONE, insert.result_code());
+
+  // Choose composite keys to query
+  std::vector<int64_t> query_data;
+  std::copy_if(source_data.begin(), source_data.end(),  std::back_inserter(query_data), [] (const int64_t& i) {
+      return i % 2 == 0;
+    });
+
+  typedef std::tuple<int64_t, int64_t> composite_key_type;
+  typedef std::tuple<int64_t, int64_t, int64_t> select_record_type;
+  typedef sqlite::buffered::input_query_by_keys_base<select_record_type,
+                                                composite_key_type,
+                                                sqlite::default_value_access_policy>
+    select_query_type;
+
+  std::vector<std::string> key_fields{"composite_key_part1", "composite_key_part2"};
+
+  select_query_type select(db, "SELECT `id`, `composite_key_part1`, `composite_key_part2` FROM `test_table` WHERE ",
+                           key_fields);
+  for (auto &q : query_data) {
+    composite_key_type k(q, q + 1);
+    select.add_key(k);
+  }
+  std::vector<select_record_type> selected;
+  std::copy(select.begin(), select.end(), std::back_inserter(selected));
+  ASSERT_EQ(selected.size(), query_data.size());
+  for (auto &s : selected) {
+    auto key_part = std::get<1>(s);
+    auto found = std::find(query_data.begin(), query_data.end(), key_part);
+    ASSERT_NE(found, query_data.end());
   }
 }
