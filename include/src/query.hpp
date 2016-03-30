@@ -4,6 +4,7 @@
 
 #include <memory>
 
+#include "tuple_utils.hpp"
 #include "value_access_policy.hpp"
 
 namespace sqlite {
@@ -89,19 +90,6 @@ namespace sqlite {
     void get(const int i, T& value) {
       value = get<T>(i);
     }
-
-    template <typename... x>
-    struct tuple_tail_type;
-
-    template <typename head_t>
-    struct tuple_tail_type<std::tuple<head_t>> {
-      typedef std::tuple<> type;
-    };
-    
-    template <typename head_t, typename... tail_t>
-    struct tuple_tail_type<std::tuple<head_t, tail_t...>> {
-      typedef std::tuple<tail_t...> type;
-    };
 
     template <std::size_t I = 0, typename tuple_t>
     typename std::enable_if<0 == std::tuple_size<tuple_t>::value, tuple_t>::type
