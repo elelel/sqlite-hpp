@@ -47,7 +47,7 @@ namespace sqlite {
         query_base<value_access_policy_t>(db),
         query_prefix_str_(query_prefix_str),
         query_postfix_str_(query_postfix_str),
-        key_parameters_offset_(key_parameters_offset_),
+        key_parameters_offset_(key_parameters_offset),
         max_sql_length_(db->sqlite_max_sql_length()),
         max_compound_select_(db->sqlite_max_compound_select()),
         max_variable_number_(db->sqlite_max_variable_number())
@@ -127,16 +127,19 @@ namespace sqlite {
         int records_to_add = 0;
         const size_t record_sz = std::tuple_size<key_tuple_type>::value;
         while (records_to_add <= keys_buf_.size()) {
-          SQLITE_HPP_LOG(std::string("input_query_by_keys_base::pull Estimated query size + delta: keys_buf_.size() = ")
-                         + std::to_string(keys_buf_.size()) +
-                         ", query length = " + std::to_string((query_prefix_str_.length() + ((keys_buf_.size() + 1) * (values_placeholders_str_.length() + rec_separator_str_.length())))) +
+          const size_t estimated_query_len =
+            query_prefix_str_.length() +
+            (records_to_add + 1) * ((values_placeholders_str_.length() + rec_separator_str_.length())) +
+            query_postfix_str_.length();
+          const size_t estimated_var_count = key_parameters_offset_ + ((records_to_add + 1) * record_sz);
+          SQLITE_HPP_LOG(std::string("input_query_by_keys_base::pull Current keys_buf_.size() = ") + std::to_string(keys_buf_.size()) +
+                         ", key parameters offset = " + std::to_string(key_parameters_offset_) +
+                         ". Estimated: query length = " + std::to_string(estimated_query_len) + 
                          " (max = " + std::to_string(max_sql_length_) + "), " +
-                         " variable number = " + std::to_string((records_to_add + 1) * record_sz) +
+                         " variable number = " + std::to_string(estimated_var_count) +
                          " (max = " + std::to_string(max_variable_number_) + ")");
-          if ((query_prefix_str_.length() +
-               ((records_to_add + 1) * (values_placeholders_str_.length() + rec_separator_str_.length()) +
-                query_postfix_str_.length()) >= max_sql_length_) ||
-              (key_parameters_offset_ + ((records_to_add + 1) * record_sz) >= max_variable_number_)) {
+          if ((estimated_query_len >= max_sql_length_) ||
+              (estimated_var_count >= max_variable_number_)) {
             SQLITE_HPP_LOG("input_query_by_keys_base::pull Limits reached");
             break;
           } else {
