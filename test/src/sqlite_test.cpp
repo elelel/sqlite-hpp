@@ -116,7 +116,7 @@ TEST(SqliteTest, BatchInsertQuery) {
   insert_type insert(db, "test_table", std::vector<std::string>{"str_field", "blob_field", "int_field", "float_field"});
   // Insert data into sql while transforming it, exactly as we did when generated expected data randomly.
   std::transform(source_data.begin(), source_data.end(), std::back_inserter(insert), derive_bogus_record);
-  ASSERT_EQ(SQLITE_DONE, insert.result_code());
+  ASSERT_NE(SQLITE_ERROR, insert.result_code());
   // flush() has to be called, as we may still have buffered data in buffered insert query.
   // It is called automatically on object destruction, so generally you won't need to do this
   // manually if you follow RIIA pattern in your program.
@@ -176,8 +176,8 @@ TEST(SqliteTest, BufferedInputQuery) {
   typedef std::tuple<int64_t, int64_t> composite_key_type;
   typedef std::tuple<int64_t, int64_t, int64_t> select_record_type;
   typedef sqlite::buffered::input_query_by_keys_base<select_record_type,
-                                                composite_key_type,
-                                                sqlite::default_value_access_policy>
+                                                     composite_key_type,
+                                                     sqlite::default_value_access_policy>
     select_query_type;
 
   std::vector<std::string> key_fields{"composite_key_part1", "composite_key_part2"};
@@ -188,12 +188,19 @@ TEST(SqliteTest, BufferedInputQuery) {
     composite_key_type k(q, q + 1);
     select.add_key(k);
   }
-  std::vector<select_record_type> selected;
-  std::copy(select.begin(), select.end(), std::back_inserter(selected));
+
+  std::set<select_record_type> selected(select.begin(), select.end());
+  std::set<int64_t> queried(query_data.begin(), query_data.end());
+  ASSERT_GT(selected.size(), 0);
   ASSERT_EQ(selected.size(), query_data.size());
-  for (auto &s : selected) {
-    auto key_part = std::get<1>(s);
-    auto found = std::find(query_data.begin(), query_data.end(), key_part);
-    ASSERT_NE(found, query_data.end());
+  while ((selected.size() > 0) && (queried.size() > 0)) {
+    auto s = selected.begin();
+    auto key_part = std::get<1>(*s);
+    auto found = std::find(queried.begin(), queried.end(), key_part);
+    ASSERT_NE(found, queried.end());
+    queried.erase(found);
+    selected.erase(s);
   }
+  ASSERT_EQ(selected.size(), 0);
+  ASSERT_EQ(queried.size(), 0);
 }
