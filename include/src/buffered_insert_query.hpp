@@ -4,6 +4,7 @@
 
 #include "logging.hpp"
 #include "query.hpp"
+#include "input_query.hpp"
 #include "value_access_policy.hpp"
 
 namespace sqlite {
@@ -115,6 +116,7 @@ namespace sqlite {
                >= max_sql_length_) ||
               (((buf_.size() + 1) * record_sz) >= max_variable_number_))
             {
+              SQLITE_HPP_LOG(std::string("insert_query::push_back Flush on limits"));
               flush();
             }
           buf_.push_back(r);
