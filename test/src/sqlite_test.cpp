@@ -11,6 +11,7 @@
 #include <sstream>
 #include <random>
 #include <limits>
+#include <map>
 
 TEST(SqliteTest, OpenDb) {
   sqlite::database db("test.db");
@@ -203,4 +204,43 @@ TEST(SqliteTest, BufferedInputQuery) {
   }
   ASSERT_EQ(selected.size(), 0);
   ASSERT_EQ(queried.size(), 0);
+}
+
+TEST(SqliteTest, BufferedInsertSelect) {
+  sqlite::database::type_ptr db(new sqlite::database::type("test.db"));
+  ASSERT_EQ(SQLITE_OK, db->result_code());
+  sqlite::query drop_table(db, "DROP TABLE IF EXISTS `test_table`");
+  drop_table.step();
+  ASSERT_EQ(SQLITE_DONE, drop_table.result_code());
+  sqlite::query create_table(db, "CREATE TABLE `test_table` \
+(`id` INTEGER PRIMARY KEY AUTOINCREMENT, \
+`data` INTEGER)");
+
+  create_table.step();
+  ASSERT_EQ(SQLITE_DONE, create_table.result_code());
+
+  typedef ::sqlite::buffered::insert_query_base<std::tuple<int64_t>,
+                                                ::sqlite::default_value_access_policy> insert_type;
+  insert_type insert(db, "test_table", std::vector<std::string>{"data"});
+  for (int i = 0; i < 1000; ++i) {
+    insert.push_back(std::tuple<int64_t>(i));
+  }
+  insert.flush();
+
+  typedef std::tuple<int64_t, int64_t> select_record_type;
+  typedef sqlite::buffered::input_query_by_keys_base<
+    select_record_type,
+    std::tuple<int64_t>,
+    sqlite::default_value_access_policy> select_query_type;
+  std::string query_prefix_str = "SELECT `id`, `data` FROM `test_table` WHERE";
+  size_t n_requested = 0;
+  select_query_type select(db, query_prefix_str, std::vector<std::string>{"data"});
+  for (int i = 0; i < 1000; ++i) {
+    select.add_key(std::tuple<int64_t>(i));
+  }
+  std::map<int64_t, int64_t> data_to_id;
+  for (auto r : select) {
+    data_to_id.insert({std::get<1>(r), std::get<0>(r)});
+  }
+  ASSERT_EQ(data_to_id.size(), 1000);
 }
