@@ -98,7 +98,11 @@ namespace sqlite {
       iterator begin() {
         pull();
         step();
-        return iterator(type_ptr(this, [] (type *) {}), false);
+        if (this->result_code_ == SQLITE_ROW) {
+          return iterator(type_ptr(this, [] (type *) {}), false);
+        } else {
+          return iterator(type_ptr(this, [] (type *) {}), true);
+        }
       }
 
       iterator end() {
